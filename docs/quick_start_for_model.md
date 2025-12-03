@@ -43,7 +43,7 @@ models:
       serving_name: gpt-4o-mini
       base_url: https://api.openai.com/v1
       api_key: your-openai-api-key
-      
+
     # Other computer (local remote)
     - provider: local_remote
       model: llama-3.1-8b

@@ -86,15 +86,15 @@ lsof -i :13141  # This is the default model deployment port
 
 ### 🛠️ Installation Guide
 For detailed installation instructions, dependency management, and configuration:
-**[📖 GETTING_STARTED.md](docs/GETTING_STARTED.md)**
+**[📖 GETTING_STARTED.md](docs/quick_start_guide.md)**
 
 ### 🎯 Usage Guide
 For comprehensive usage instructions, workflows, and troubleshooting:
-**[📖 QUICK_START.md](docs/QUICK_START.md)**
+**[📖 QUICK_START.md](docs/quick_start_guide.md)**
 
 ### 🏗️ Architecture Overview
 For system architecture, data flow, and technical details:
-**[📖 ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+**[📖 ARCHITECTURE.md](docs/arch.md)**
 
 ## 🎮 Basic Usage
 
@@ -323,8 +323,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ---
 
 **Need help?** Check out our detailed documentation:
-- **[GETTING_STARTED.md](docs/GETTING_STARTED.md)** - Installation and setup
-- **[QUICK_START.md](docs/QUICK_START.md)** - Usage guide and workflows
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture overview
-- **[LOCAL_REMOTE_MODELS.md](docs/LOCAL_REMOTE_MODELS.md)** - Local and remote models configuration
-- **[DOCUMENT_AND_RAG.md](docs/DOCUMENT_AND_RAG.md)** - Document processing and RAG implementation
+- **[quick_start.md](docs/quick_start_guide.md)** - Usage guide and workflows
+- **[arch.md](docs/arch.md)** - System architecture overview
+- **[quick_start_for_model.md](docs/quick_start_for_model.md)** - Local and remote models configuration
+- **[doc_and_rag.md](docs/doc_and_rag.md)** - Document processing and RAG implementation
