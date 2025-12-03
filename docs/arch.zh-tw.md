@@ -2,6 +2,47 @@
 
 KVCache Chatbot 是一個以「文件輔助多輪對話」為核心的聊天系統，採用前後端分離架構。它同時支援本地與遠端的 LLM，提供高效的文件問答體驗，並透過 KV 快取最佳化推論效能。
 
+### 架構圖
+
+```mermaid
+flowchart LR
+    User["User"]
+    subgraph FE["Frontend (Gradio)"]
+        FE_Doc["Document Panel"]
+        FE_Chat["Chat Panel"]
+        FE_Model["Model Panel"]
+    end
+
+    subgraph BE["Backend (FastAPI)"]
+        BE_API["REST API\n(session / document / model / logs)"]
+        BE_Core["Core Services- Session & Document\n- RAG\n- LLM Adapter"]
+    end
+
+    subgraph Models["Models"]
+        Local["Local Model Server\n+ KV Cache"]
+        Remote["Remote LLM APIs"]
+    end
+
+    subgraph Storage["Storage"]
+        Files["uploads/ (files)"]
+        Memory["In-memory\nsessions & docs"]
+        Logs["logs/ (model logs)"]
+    end
+
+    User --> FE
+    FE_Doc -->|"HTTP"| BE_API
+    FE_Chat -->|"HTTP/SSE"| BE_API
+    FE_Model -->|"HTTP"| BE_API
+
+    BE_API --> BE_Core
+    BE_Core --> Files
+    BE_Core --> Memory
+    BE_Core --> Logs
+
+    BE_Core --> Local
+    BE_Core --> Remote
+```
+
 - **前端（`src/web`）– Gradio 介面**
   - 文件上傳與管理
   - 文件選擇與快取控制
@@ -26,6 +67,73 @@ KVCache Chatbot 是一個以「文件輔助多輪對話」為核心的聊天系�
 ---
 
 ## 架構設計重點
+
+### 後端內部結構
+
+```mermaid
+flowchart TB
+    subgraph Config
+        Env[env.yaml]
+    end
+
+    subgraph App
+        Routers[Routers]
+        Services[Services]
+    end
+
+    subgraph DocFlow["Document Processing Flow"]
+        DocSvc[Document Service]
+        Chunking[Chunking Stage]
+        Grouping[Grouping Stage]
+        DocMgr[Document Manager]
+    end
+
+    subgraph RAGFlow["RAG Retrieval Flow"]
+        RAGSvc[RAG Service]
+        Tokenizer[Tokenizer]
+        BM25[BM25 Scoring]
+    end
+
+    subgraph ChatFlow["Chat Flow"]
+        SessionSvc[Session Service]
+        LLMSvc[LLM Service]
+        Streaming[Streaming Response]
+    end
+
+    subgraph External
+        Store[Storage]
+        ModelSide[Models]
+    end
+
+    Env --> App
+    App --> Routers
+    Routers --> Services
+    Services --> DocFlow
+    Services --> RAGFlow
+    Services --> ChatFlow
+
+    DocSvc --> Chunking
+    Chunking --> Grouping
+    Grouping --> DocMgr
+
+    RAGSvc --> Tokenizer
+    Tokenizer --> BM25
+    BM25 --> DocMgr
+
+    SessionSvc --> RAGSvc
+    RAGSvc --> LLMSvc
+    LLMSvc --> Streaming
+    Streaming --> ModelSide
+
+    DocMgr --> Store
+    SessionSvc --> Store
+```
+
+後端採用分層架構，包含三個主要處理流程：
+
+- **文件處理流程**：文件經過切塊（chunking）與分組（grouping）階段處理後，儲存至 Document Manager
+- **RAG 檢索流程**：RAG Service 使用斷詞（tokenization）與 BM25 評分機制，從 Document Manager 中檢索相關的文件群組
+- **聊天流程**：Session Service 協調 RAG 檢索，將上下文傳遞給 LLM Service，並將回應串流回傳給客戶端
 
 ### 入口與應用程式生命週期
 

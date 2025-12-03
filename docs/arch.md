@@ -2,30 +2,7 @@
 
 KVCache Chatbot is a document-augmented, multi-turn chatbot application with a clear separation between frontend and backend. It is designed to support both local and remote LLMs, provide efficient document-based question answering, and leverage KV cache optimization for better performance.
 
-- **Frontend (`src/web`)**: Gradio-based web UI
-  - Document upload and management
-  - Document selection and cache control
-  - Chat interface with streaming responses
-  - Model management panel (start/stop/restart, status, logs)
-
-- **Backend (`src/api`)**: FastAPI-based REST API
-  - Session management for multi-turn conversations
-  - Document upload, parsing, grouping, and RAG retrieval
-  - Model management for local model server lifecycle
-  - LLM integration via OpenAI-compatible APIs (OpenAI, Gemini, local servers, etc.)
-  - KV cache pre-warming for document context
-
-High-level flow:
-
-1. The user uploads a document in the frontend.
-2. The backend extracts and stores the document content (file in `uploads/`, metadata in memory).
-3. When the user clicks "Cache", the backend sends a short prompt (document content wrapped in a system prompt) to the model to pre-populate the KV cache.
-4. During chat, the user selects a document; the backend injects the document context into the system prompt and sends the conversation to the LLM service.
-5. The LLM response is streamed back to the frontend.
-
----
-
-## Architecture Diagram
+### Architecture Diagram
 
 ```mermaid
 flowchart LR
@@ -38,7 +15,7 @@ flowchart LR
 
     subgraph BE["Backend (FastAPI)"]
         BE_API["REST API\n(session / document / model / logs)"]
-        BE_Core["Core Services\n- Session & Document\n- RAG\n- LLM Adapter"]
+        BE_Core["Core Services- Session & Document\n- RAG\n- LLM Adapter"]
     end
 
     subgraph Models["Models"]
@@ -66,9 +43,97 @@ flowchart LR
     BE_Core --> Remote
 ```
 
+- **Frontend (`src/web`)**: Gradio-based web UI
+  - Document upload and management
+  - Document selection and cache control
+  - Chat interface with streaming responses
+  - Model management panel (start/stop/restart, status, logs)
+
+- **Backend (`src/api`)**: FastAPI-based REST API
+  - Session management for multi-turn conversations
+  - Document upload, parsing, grouping, and RAG retrieval
+  - Model management for local model server lifecycle
+  - LLM integration via OpenAI-compatible APIs (OpenAI, Gemini, local servers, etc.)
+  - KV cache pre-warming for document context
+
+High-level flow:
+
+1. The user uploads a document in the frontend.
+2. The backend extracts and stores the document content (file in `uploads/`, metadata in memory).
+3. When the user clicks "Cache", the backend sends a short prompt (document content wrapped in a system prompt) to the model to pre-populate the KV cache.
+4. During chat, the user selects a document; the backend injects the document context into the system prompt and sends the conversation to the LLM service.
+5. The LLM response is streamed back to the frontend.
+
 ---
 
 ## Architecture Highlights
+
+### Backend Internal Structure
+
+```mermaid
+flowchart TB
+    subgraph Config
+        Env[env.yaml]
+    end
+
+    subgraph App
+        Routers[Routers]
+        Services[Services]
+    end
+
+    subgraph DocFlow["Document Processing Flow"]
+        DocSvc[Document Service]
+        Chunking[Chunking Stage]
+        Grouping[Grouping Stage]
+        DocMgr[Document Manager]
+    end
+
+    subgraph RAGFlow["RAG Retrieval Flow"]
+        RAGSvc[RAG Service]
+        Tokenizer[Tokenizer]
+        BM25[BM25 Scoring]
+    end
+
+    subgraph ChatFlow["Chat Flow"]
+        SessionSvc[Session Service]
+        LLMSvc[LLM Service]
+        Streaming[Streaming Response]
+    end
+
+    subgraph External
+        Store[Storage]
+        ModelSide[Models]
+    end
+
+    Env --> App
+    App --> Routers
+    Routers --> Services
+    Services --> DocFlow
+    Services --> RAGFlow
+    Services --> ChatFlow
+
+    DocSvc --> Chunking
+    Chunking --> Grouping
+    Grouping --> DocMgr
+
+    RAGSvc --> Tokenizer
+    Tokenizer --> BM25
+    BM25 --> DocMgr
+
+    SessionSvc --> RAGSvc
+    RAGSvc --> LLMSvc
+    LLMSvc --> Streaming
+    Streaming --> ModelSide
+
+    DocMgr --> Store
+    SessionSvc --> Store
+```
+
+The backend follows a layered architecture with three main processing flows:
+
+- **Document Processing Flow**: Documents are processed through chunking and grouping stages, then stored in the Document Manager
+- **RAG Retrieval Flow**: RAG Service uses tokenization and BM25 scoring to retrieve relevant document groups from Document Manager
+- **Chat Flow**: Session Service coordinates RAG retrieval, passes context to LLM Service, and streams responses back to clients
 
 ### Entry Point and Application Lifecycle
 
