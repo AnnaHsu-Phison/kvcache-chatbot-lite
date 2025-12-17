@@ -346,6 +346,16 @@ class Settings(BaseSettings):
             with open(yaml_file, 'r', encoding='utf-8') as f:
                 yaml_data = yaml.safe_load(f) or {}
 
+            # Load API settings
+            if 'api' in yaml_data:
+                api_data = yaml_data['api']
+                self.api = APISettings(
+                    title=api_data.get('title', self.api.title),
+                    version=api_data.get('version', self.api.version),
+                    prefix=api_data.get('prefix', self.api.prefix),
+                    session_timeout=api_data.get('session_timeout', self.api.session_timeout)
+                )
+
             # Load server settings
             if 'server' in yaml_data:
                 server_data = yaml_data['server']
@@ -384,6 +394,23 @@ class Settings(BaseSettings):
                         model_settings = self._create_model_settings(model_data, "local")
                         self.models['legacy'].append(model_settings)
                         self.all_models.append(model_settings)
+
+            # Load documents settings
+            if 'documents' in yaml_data:
+                documents_data = yaml_data['documents']
+                self.documents = DocumentSettings(
+                    upload_dir=documents_data.get('upload_dir', self.documents.upload_dir),
+                    max_file_size=documents_data.get('max_file_size', self.documents.max_file_size),
+                    allowed_extensions=documents_data.get('allowed_extensions', self.documents.allowed_extensions),
+                    chunk_size=documents_data.get('chunk_size', self.documents.chunk_size),
+                    chunk_overlap=documents_data.get('chunk_overlap', self.documents.chunk_overlap),
+                    tokenizer_model=documents_data.get('tokenizer_model', self.documents.tokenizer_model),
+                    grouping=documents_data.get('grouping', self.documents.grouping),
+                    file_max_tokens=documents_data.get('file_max_tokens', self.documents.file_max_tokens),
+                    utilization_threshold=documents_data.get('utilization_threshold', self.documents.utilization_threshold),
+                    similarity_method=documents_data.get('similarity_method', self.documents.similarity_method),
+                    similarity_min_score=documents_data.get('similarity_min_score', self.documents.similarity_min_score)
+                )
 
             # Load prompts settings
             if 'prompts' in yaml_data:
